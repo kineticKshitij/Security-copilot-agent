@@ -151,22 +151,19 @@ class DatabaseManager:
     
     def _build_sqlalchemy_url(self) -> str:
         """Build SQLAlchemy URL from config"""
-        # If we have individual SQL components, build the URL
-        if config.azure_sql_server and config.azure_sql_database and config.azure_sql_username and config.azure_sql_password:
+        # Always try to build from individual components if available
+        if config.azure_sql_server and config.azure_sql_username and config.azure_sql_password:
             url = (
                 f"mssql+pymssql://{config.azure_sql_username}:{config.azure_sql_password}@"
                 f"{config.azure_sql_server}/{config.azure_sql_database}"
             )
             return url
-        elif self.connection_string and not self.connection_string.startswith(('mssql+', 'sqlite')):
-            # If it's an ODBC connection string, convert to SQLAlchemy format
-            if config.azure_sql_server and config.azure_sql_username:
-                url = (
-                    f"mssql+pymssql://{config.azure_sql_username}:{config.azure_sql_password}@"
-                    f"{config.azure_sql_server}/{config.azure_sql_database}"
-                )
-                return url
-        return self.connection_string or ""
+        
+        # Fall back to connection string if provided and valid
+        if self.connection_string and self.connection_string.startswith(('mssql+', 'sqlite')):
+            return self.connection_string
+            
+        return ""
     
     def _initialize_database(self):
         """Initialize database connection and create tables"""
@@ -181,11 +178,7 @@ class DatabaseManager:
                 sqlalchemy_url,
                 echo=False,  # Set to True for SQL debugging
                 pool_pre_ping=True,
-                pool_recycle=3600,
-                connect_args={
-                    "timeout": 30,
-                    "autocommit": False
-                }
+                pool_recycle=3600
             )
             
             self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
