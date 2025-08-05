@@ -151,7 +151,14 @@ class DatabaseManager:
     
     def _build_sqlalchemy_url(self) -> str:
         """Build SQLAlchemy URL from config"""
-        if self.connection_string and not self.connection_string.startswith(('mssql+', 'sqlite')):
+        # If we have individual SQL components, build the URL
+        if config.azure_sql_server and config.azure_sql_database and config.azure_sql_username and config.azure_sql_password:
+            url = (
+                f"mssql+pymssql://{config.azure_sql_username}:{config.azure_sql_password}@"
+                f"{config.azure_sql_server}/{config.azure_sql_database}"
+            )
+            return url
+        elif self.connection_string and not self.connection_string.startswith(('mssql+', 'sqlite')):
             # If it's an ODBC connection string, convert to SQLAlchemy format
             if config.azure_sql_server and config.azure_sql_username:
                 url = (
@@ -176,7 +183,6 @@ class DatabaseManager:
                 pool_pre_ping=True,
                 pool_recycle=3600,
                 connect_args={
-                    "driver": "ODBC Driver 18 for SQL Server",
                     "timeout": 30,
                     "autocommit": False
                 }
