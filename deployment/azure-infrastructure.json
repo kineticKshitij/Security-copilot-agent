@@ -1,0 +1,296 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "appName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Security Copilot application"
+            }
+        },
+        "environment": {
+            "type": "string",
+            "defaultValue": "staging",
+            "allowedValues": [
+                "staging",
+                "production"
+            ],
+            "metadata": {
+                "description": "Environment for deployment"
+            }
+        },
+        "containerImage": {
+            "type": "string",
+            "defaultValue": "ghcr.io/your-org/security-copilot-agent:latest",
+            "metadata": {
+                "description": "Container image to deploy"
+            }
+        },
+        "azureSubscriptionId": {
+            "type": "string",
+            "metadata": {
+                "description": "Azure subscription ID to monitor"
+            }
+        },
+        "githubToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "GitHub personal access token"
+            }
+        },
+        "githubRepoOwner": {
+            "type": "string",
+            "metadata": {
+                "description": "GitHub repository owner"
+            }
+        },
+        "githubRepoName": {
+            "type": "string",
+            "metadata": {
+                "description": "GitHub repository name"
+            }
+        },
+        "sqlServerName": {
+            "type": "string",
+            "metadata": {
+                "description": "Azure SQL Server name"
+            }
+        },
+        "sqlDatabaseName": {
+            "type": "string",
+            "defaultValue": "security-copilot",
+            "metadata": {
+                "description": "Azure SQL Database name"
+            }
+        },
+        "sqlAdminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "SQL Server admin username"
+            }
+        },
+        "sqlAdminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "SQL Server admin password"
+            }
+        }
+    },
+    "variables": {
+        "resourceGroupName": "[resourceGroup().name]",
+        "location": "[resourceGroup().location]",
+        "appServicePlanName": "[concat(parameters('appName'), '-plan-', parameters('environment'))]",
+        "webAppName": "[concat(parameters('appName'), '-', parameters('environment'))]",
+        "keyVaultName": "[concat(parameters('appName'), '-kv-', parameters('environment'))]",
+        "managedIdentityName": "[concat(parameters('appName'), '-identity-', parameters('environment'))]",
+        "logAnalyticsWorkspaceName": "[concat(parameters('appName'), '-logs-', parameters('environment'))]",
+        "applicationInsightsName": "[concat(parameters('appName'), '-insights-', parameters('environment'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "apiVersion": "2023-01-31",
+            "name": "[variables('managedIdentityName')]",
+            "location": "[variables('location')]"
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2023-07-01",
+            "name": "[variables('keyVaultName')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))]"
+            ],
+            "properties": {
+                "sku": {
+                    "family": "A",
+                    "name": "standard"
+                },
+                "tenantId": "[subscription().tenantId]",
+                "accessPolicies": [
+                    {
+                        "tenantId": "[subscription().tenantId]",
+                        "objectId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))).principalId]",
+                        "permissions": {
+                            "secrets": [
+                                "get",
+                                "list"
+                            ]
+                        }
+                    }
+                ],
+                "enabledForDeployment": false,
+                "enabledForDiskEncryption": false,
+                "enabledForTemplateDeployment": false,
+                "enableSoftDelete": true,
+                "softDeleteRetentionInDays": 90,
+                "enableRbacAuthorization": false
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults/secrets",
+            "apiVersion": "2023-07-01",
+            "name": "[concat(variables('keyVaultName'), '/github-token')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+            ],
+            "properties": {
+                "value": "[parameters('githubToken')]"
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults/secrets",
+            "apiVersion": "2023-07-01",
+            "name": "[concat(variables('keyVaultName'), '/sql-connection-string')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+            ],
+            "properties": {
+                "value": "[concat('Driver={ODBC Driver 18 for SQL Server};Server=tcp:', parameters('sqlServerName'), '.database.windows.net,1433;Database=', parameters('sqlDatabaseName'), ';Uid=', parameters('sqlAdminUsername'), ';Pwd=', parameters('sqlAdminPassword'), ';Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;')]"
+            }
+        },
+        {
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "apiVersion": "2023-09-01",
+            "name": "[variables('logAnalyticsWorkspaceName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "sku": {
+                    "name": "PerGB2018"
+                },
+                "retentionInDays": 30
+            }
+        },
+        {
+            "type": "Microsoft.Insights/components",
+            "apiVersion": "2020-02-02",
+            "name": "[variables('applicationInsightsName')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsWorkspaceName'))]"
+            ],
+            "kind": "web",
+            "properties": {
+                "Application_Type": "web",
+                "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsWorkspaceName'))]"
+            }
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2023-01-01",
+            "name": "[variables('appServicePlanName')]",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "B1",
+                "tier": "Basic",
+                "size": "B1",
+                "family": "B",
+                "capacity": 1
+            },
+            "kind": "linux",
+            "properties": {
+                "reserved": true
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2023-01-01",
+            "name": "[variables('webAppName')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))]",
+                "[resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))]"
+            ],
+            "kind": "app,linux,container",
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))]": {}
+                }
+            },
+            "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+                            "value": "false"
+                        },
+                        {
+                            "name": "DOCKER_REGISTRY_SERVER_URL",
+                            "value": "https://ghcr.io"
+                        },
+                        {
+                            "name": "AZURE_SUBSCRIPTION_ID",
+                            "value": "[parameters('azureSubscriptionId')]"
+                        },
+                        {
+                            "name": "USE_MANAGED_IDENTITY",
+                            "value": "true"
+                        },
+                        {
+                            "name": "GITHUB_REPO_OWNER",
+                            "value": "[parameters('githubRepoOwner')]"
+                        },
+                        {
+                            "name": "GITHUB_REPO_NAME",
+                            "value": "[parameters('githubRepoName')]"
+                        },
+                        {
+                            "name": "LOG_LEVEL",
+                            "value": "INFO"
+                        },
+                        {
+                            "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+                            "value": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))).ConnectionString]"
+                        },
+                        {
+                            "name": "GITHUB_TOKEN",
+                            "value": "[concat('@Microsoft.KeyVault(VaultName=', variables('keyVaultName'), ';SecretName=github-token)')]"
+                        },
+                        {
+                            "name": "AZURE_SQL_CONNECTION_STRING",
+                            "value": "[concat('@Microsoft.KeyVault(VaultName=', variables('keyVaultName'), ';SecretName=sql-connection-string)')]"
+                        }
+                    ],
+                    "linuxFxVersion": "[concat('DOCKER|', parameters('containerImage'))]",
+                    "alwaysOn": true,
+                    "ftpsState": "Disabled",
+                    "minTlsVersion": "1.2",
+                    "http20Enabled": true
+                },
+                "httpsOnly": true,
+                "clientAffinityEnabled": false
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "scope": "[concat('Microsoft.Resources/subscriptions/', subscription().subscriptionId)]",
+            "name": "[guid(subscription().subscriptionId, variables('managedIdentityName'), 'Reader')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/acdd72a7-3385-48ef-bd42-f606fba81ae7')]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))).principalId]",
+                "principalType": "ServicePrincipal"
+            }
+        }
+    ],
+    "outputs": {
+        "webAppUrl": {
+            "type": "string",
+            "value": "[concat('https://', reference(resourceId('Microsoft.Web/sites', variables('webAppName'))).defaultHostName)]"
+        },
+        "managedIdentityPrincipalId": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))).principalId]"
+        },
+        "keyVaultName": {
+            "type": "string",
+            "value": "[variables('keyVaultName')]"
+        }
+    }
+}

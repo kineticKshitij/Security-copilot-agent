@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "security-copilot-agent"
+version = "1.0.0"
+description = "Azure Security Copilot Agent - Automated NSG/Firewall scanner with GitHub integration"
+authors = [{name = "Security Team", email = "security@company.com"}]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Security",
+    "Topic :: System :: Systems Administration",
+]
+dependencies = [
+    "azure-identity>=1.15.0",
+    "azure-mgmt-network>=25.3.0",
+    "azure-mgmt-sql>=3.0.1",
+    "azure-storage-blob>=12.19.0",
+    "PyGithub>=2.1.1",
+    "requests>=2.31.0",
+    "pyodbc>=5.0.1",
+    "SQLAlchemy>=2.0.23",
+    "python-dotenv>=1.0.0",
+    "pydantic>=2.5.0",
+    "click>=8.1.7",
+    "rich>=13.7.0",
+    "structlog>=23.2.0",
+    "cryptography>=41.0.8",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.3",
+    "pytest-asyncio>=0.21.1",
+    "pytest-mock>=3.12.0",
+    "black>=23.11.0",
+    "flake8>=6.1.0",
+    "mypy>=1.7.0",
+]
+
+[project.scripts]
+security-copilot = "security_copilot.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
