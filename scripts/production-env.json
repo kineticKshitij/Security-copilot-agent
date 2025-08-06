@@ -1,13 +1,13 @@
 {
-  "wait_timer": 5,
-  "reviewers": [
-    {
-      "type": "User",
-      "id": 143507517
+    "wait_timer": 5,
+    "reviewers": [
+        {
+            "type": "User",
+            "id": 143507517
+        }
+    ],
+    "deployment_branch_policy": {
+        "protected_branches": true,
+        "custom_branch_policies": false
     }
-  ],
-  "deployment_branch_policy": {
-    "protected_branches": true,
-    "custom_branch_policies": false
-  }
 }
