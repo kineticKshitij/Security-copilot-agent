@@ -174,17 +174,8 @@ jobs:
         image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
         name: security-copilot-staging
         location: 'Southeast Asia'
-        environment-variables: |
-          AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          GITHUB_REPO_OWNER=${{ github.repository_owner }}
-          GITHUB_REPO_NAME=${{ github.event.repository.name }}
-          LOG_LEVEL=INFO
-        secure-environment-variables: |
-          AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }}
-          AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}
-          GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
-          AZURE_SQL_CONNECTION_STRING=${{ secrets.AZURE_SQL_CONNECTION_STRING }}
+        environment-variables: AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }} GITHUB_REPO_OWNER=${{ github.repository_owner }} GITHUB_REPO_NAME=${{ github.event.repository.name }} LOG_LEVEL=INFO
+        secure-environment-variables: AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }} AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }} AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }} GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} AZURE_SQL_CONNECTION_STRING=${{ secrets.AZURE_SQL_CONNECTION_STRING }}
 
   security-audit:
     name: Security Audit
@@ -261,18 +252,8 @@ jobs:
         location: 'Southeast Asia'
         cpu: 2
         memory: 4
-        environment-variables: |
-          AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          GITHUB_REPO_OWNER=${{ github.repository_owner }}
-          GITHUB_REPO_NAME=${{ github.event.repository.name }}
-          LOG_LEVEL=INFO
-          AUTO_REMEDIATION_ENABLED=true
-        secure-environment-variables: |
-          AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }}
-          AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}
-          GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
-          AZURE_SQL_CONNECTION_STRING=${{ secrets.AZURE_SQL_CONNECTION_STRING }}
+        environment-variables: AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }} GITHUB_REPO_OWNER=${{ github.repository_owner }} GITHUB_REPO_NAME=${{ github.event.repository.name }} LOG_LEVEL=INFO AUTO_REMEDIATION_ENABLED=true
+        secure-environment-variables: AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }} AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }} AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }} GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} AZURE_SQL_CONNECTION_STRING=${{ secrets.AZURE_SQL_CONNECTION_STRING }}
           
     - name: Run post-deployment health check
       run: |
