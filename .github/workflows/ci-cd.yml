@@ -195,7 +195,8 @@ jobs:
   security-audit:
     name: Security Audit
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule'
+    needs: [test, security-scan]
+    if: github.event_name == 'push' || github.event_name == 'schedule'
     
     steps:
     - uses: actions/checkout@v4
@@ -258,15 +259,29 @@ jobs:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
         
     - name: Deploy to Azure Container Instances (Production)
-      uses: azure/aci-deploy@v1
-      with:
-        resource-group: security-copilot-rg-sea
-        dns-name-label: sec-copilot-prod
-        image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-        name: security-copilot-production
-        location: 'Southeast Asia'
-        cpu: 2
-        memory: 4
+      run: |
+        # Get ACR login server and credentials for ACI
+        ACR_SERVER="${{ env.REGISTRY }}"
+        ACR_USERNAME=$(az acr credential show --name securitycopilotacr3874 --query "username" -o tsv)
+        ACR_PASSWORD=$(az acr credential show --name securitycopilotacr3874 --query "passwords[0].value" -o tsv)
+        
+        # Deploy to ACI with ACR credentials
+        az container create \
+          --resource-group security-copilot-rg-sea \
+          --name security-copilot-production \
+          --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+          --dns-name-label sec-copilot-prod \
+          --location "Southeast Asia" \
+          --cpu 2 \
+          --memory 4 \
+          --registry-login-server $ACR_SERVER \
+          --registry-username $ACR_USERNAME \
+          --registry-password $ACR_PASSWORD \
+          --ports 80 \
+          --protocol TCP \
+          --restart-policy Always \
+          --os-type Linux \
+          --ip-address Public
           
     - name: Run post-deployment health check
       run: |
