@@ -168,15 +168,29 @@ jobs:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
         
     - name: Deploy to Azure Container Instances  
-      uses: azure/aci-deploy@v1
-      with:
-        resource-group: security-copilot-rg-sea
-        dns-name-label: sec-copilot-staging
-        image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-        name: security-copilot-staging
-        location: 'Southeast Asia'
-        cpu: 1
-        memory: 2
+      run: |
+        # Get ACR login server and credentials for ACI
+        ACR_SERVER="${{ env.REGISTRY }}"
+        ACR_USERNAME=$(az acr credential show --name securitycopilotacr3874 --query "username" -o tsv)
+        ACR_PASSWORD=$(az acr credential show --name securitycopilotacr3874 --query "passwords[0].value" -o tsv)
+        
+        # Deploy to ACI with ACR credentials
+        az container create \
+          --resource-group security-copilot-rg-sea \
+          --name security-copilot-staging \
+          --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+          --dns-name-label sec-copilot-staging \
+          --location "Southeast Asia" \
+          --cpu 1 \
+          --memory 2 \
+          --registry-login-server $ACR_SERVER \
+          --registry-username $ACR_USERNAME \
+          --registry-password $ACR_PASSWORD \
+          --ports 80 \
+          --protocol TCP \
+          --restart-policy Always \
+          --os-type Linux \
+          --ip-address Public
 
   security-audit:
     name: Security Audit
