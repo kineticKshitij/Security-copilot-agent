@@ -10,7 +10,8 @@ PyGithub>=2.1.1
 requests>=2.31.0
 
 # Database
-pyodbc>=5.0.1
+# pyodbc>=5.0.1  # SQL Server - commented out for container compatibility
+pymssql>=2.2.11  # Alternative SQL Server driver
 SQLAlchemy>=2.0.23
 
 # Configuration and utilities
