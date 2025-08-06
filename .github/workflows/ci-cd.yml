@@ -216,6 +216,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
+    - name: Install package in development mode
+      run: |
+        pip install -e .
+        
     - name: Run Security Copilot scan
       env:
         AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
