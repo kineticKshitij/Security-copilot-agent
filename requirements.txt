@@ -1,6 +1,7 @@
 # Azure SDK packages
 azure-identity>=1.15.0
 azure-mgmt-network>=25.3.0
+azure-mgmt-resource>=24.0.0
 azure-mgmt-sql>=3.0.1
 azure-storage-blob>=12.19.0
 
@@ -15,6 +16,7 @@ SQLAlchemy>=2.0.23
 # Configuration and utilities
 python-dotenv>=1.0.0
 pydantic>=2.5.0
+pydantic-settings>=2.10.0
 click>=8.1.7
 rich>=13.7.0
 

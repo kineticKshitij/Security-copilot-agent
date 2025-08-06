@@ -10,7 +10,6 @@ from security_copilot.scanner import SecurityScanner
 from security_copilot.models import FindingType, Severity
 
 
-@pytest.mark.asyncio
 class TestSecurityScanner:
     
     def test_scanner_initialization(self, mock_config):
@@ -144,6 +143,7 @@ class TestSecurityScanner:
             assert "az network nsg rule update" in ssh_script
             assert "bastion" in ssh_script.lower()
     
+    @pytest.mark.asyncio
     @patch('security_copilot.scanner.NetworkManagementClient')
     async def test_scan_subscription(self, mock_network_client, mock_config):
         """Test subscription scanning"""
@@ -177,7 +177,6 @@ class TestSecurityScanner:
                 assert scan_result.completed_at is not None
 
 
-@pytest.mark.asyncio
 class TestSecurityRuleAnalysis:
     
     def test_deny_rules_ignored(self, sample_security_rule, mock_config):
@@ -212,9 +211,9 @@ class TestSecurityRuleAnalysis:
             assert FindingType.DATABASE_PORTS_EXPOSED in finding_types
 
 
-@pytest.mark.asyncio 
 class TestPerformance:
     
+    @pytest.mark.asyncio
     async def test_concurrent_scanning(self, mock_config):
         """Test that scanning can handle multiple resource groups concurrently"""
         with patch('security_copilot.scanner.config', mock_config):

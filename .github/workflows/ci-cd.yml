@@ -40,6 +40,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest pytest-asyncio pytest-mock pytest-cov
+        pip install black flake8 mypy
+        
+    - name: Install package in development mode
+      run: |
+        pip install -e .
         
     - name: Run linting
       run: |
@@ -149,11 +154,11 @@ jobs:
     - name: Deploy to Azure Container Instances
       uses: azure/aci-deploy@v1
       with:
-        resource-group: security-copilot-staging
+        resource-group: security-copilot-rg-sea-staging
         dns-name-label: security-copilot-staging-${{ github.sha }}
         image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
         name: security-copilot-staging
-        location: 'East US'
+        location: 'Southeast Asia'
         environment-variables: |
           AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}
           GITHUB_REPO_OWNER=${{ github.repository_owner }}
@@ -234,10 +239,10 @@ jobs:
     - name: Deploy to Azure App Service
       uses: azure/webapps-deploy@v2
       with:
-        app-name: security-copilot-prod
+        app-name: securitycopilot-prod
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
         
     - name: Run post-deployment health check
       run: |
         sleep 30
-        curl -f https://security-copilot-prod.azurewebsites.net/health || exit 1
+        curl -f https://securitycopilot-prod.azurewebsites.net/health || exit 1

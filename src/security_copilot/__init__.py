@@ -1,8 +1,8 @@
 """
 Security Copilot Agent
 
-A comprehensive Azure security automation tool that scans Network Security Groups (NSGs) 
-and firewall rules for misconfigurations, automatically creates GitHub issues with 
+A comprehensive Azure security automation tool that scans Network Security Groups (NSGs)
+and firewall rules for misconfigurations, automatically creates GitHub issues with
 remediation steps, generates pull requests for fixes, and logs all findings to Azure SQL Database.
 """
 
@@ -17,7 +17,7 @@ from .config import Config
 
 __all__ = [
     "SecurityScanner",
-    "GitHubIntegration", 
+    "GitHubIntegration",
     "SecurityFinding",
     "Severity",
     "Config",
