@@ -176,6 +176,9 @@ jobs:
         location: 'Southeast Asia'
         cpu: 1
         memory: 2
+        registry-login-server: ${{ env.REGISTRY }}
+        registry-username: ${{ github.actor }}
+        registry-password: ${{ secrets.GITHUB_TOKEN }}
 
   security-audit:
     name: Security Audit
@@ -252,6 +255,9 @@ jobs:
         location: 'Southeast Asia'
         cpu: 2
         memory: 4
+        registry-login-server: ${{ env.REGISTRY }}
+        registry-username: ${{ github.actor }}
+        registry-password: ${{ secrets.GITHUB_TOKEN }}
           
     - name: Run post-deployment health check
       run: |
