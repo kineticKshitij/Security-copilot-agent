@@ -169,7 +169,7 @@ jobs:
     - name: Deploy to Azure Container Instances
       uses: azure/aci-deploy@v1
       with:
-        resource-group: security-copilot-rg-sea-staging
+        resource-group: security-copilot-rg-sea
         dns-name-label: security-copilot-staging-${{ github.sha }}
         image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
         name: security-copilot-staging
