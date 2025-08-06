@@ -198,6 +198,11 @@ jobs:
     needs: [test, security-scan]
     if: github.event_name == 'push' || github.event_name == 'schedule'
     
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    
     steps:
     - uses: actions/checkout@v4
     
