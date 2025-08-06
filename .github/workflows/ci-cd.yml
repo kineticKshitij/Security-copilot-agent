@@ -170,7 +170,7 @@ jobs:
       uses: azure/aci-deploy@v1
       with:
         resource-group: security-copilot-rg-sea
-        dns-name-label: security-copilot-staging-${{ github.sha }}
+        dns-name-label: sec-copilot-staging
         image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
         name: security-copilot-staging
         location: 'Southeast Asia'
@@ -255,7 +255,7 @@ jobs:
       uses: azure/aci-deploy@v1
       with:
         resource-group: security-copilot-rg-sea
-        dns-name-label: security-copilot-prod-${{ github.sha }}
+        dns-name-label: sec-copilot-prod
         image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
         name: security-copilot-production
         location: 'Southeast Asia'
